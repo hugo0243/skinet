@@ -19,7 +19,7 @@ namespace API
            var host = CreateHostBuilder(args).Build();
 
            using (IServiceScope scope = host.Services.CreateScope())
-           {
+           {  
                IServiceProvider services = scope.ServiceProvider;
                var loggerFactory = services.GetRequiredService<ILoggerFactory>();
 
