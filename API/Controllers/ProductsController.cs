@@ -9,12 +9,12 @@ using Core.Interfaces;
 using Core.specifications;
 using API.Dtos;
 using AutoMapper;
+using API.Errors;
+using Microsoft.AspNetCore.Http;
 
 namespace API.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class ProductsController : ControllerBase
+    public class ProductsController : BaseApiController
     {
         private readonly IGenericRepository<Product> _genericProductRepo;
         private readonly IGenericRepository<ProductBrand> _genericProductBrand;
@@ -53,10 +53,20 @@ namespace API.Controllers
         }
 
         [HttpGet("{id}")]
+        // Estos atributos explicitamente dicen que tipo de response podemos obtener de este método
+        // y si es necesario la clase que los esta manejando
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
         public async Task<ActionResult<ProductToReturnDto>> GetProduct(int id)
         {
             var spec =  new ProductsWithTypesAndBrandsSpecification(id);
             Product product = await _genericProductRepo.GetEntityWithSpec(spec);
+
+            if (product == null)
+            {
+                // Usa el objeto ApiResponse como response, se envia serializado.
+                return NotFound(new ApiResponse(404));
+            }
 
             return _mapper.Map<Product, ProductToReturnDto>(product);
        /*      return new ProductToReturnDto()
