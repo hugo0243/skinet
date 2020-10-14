@@ -11,6 +11,7 @@ using API.Dtos;
 using AutoMapper;
 using API.Errors;
 using Microsoft.AspNetCore.Http;
+using API.Helpers;
 
 namespace API.Controllers
 {
@@ -32,14 +33,28 @@ namespace API.Controllers
             _mapper = mapper;
         }
 
+        // Como estoy esperando un objeto como parámetro el controlador busca en su body este tipo
+        // como no lo encuestra hay que especificarle que lo busque en los query params 
         [HttpGet]
-        public async Task<ActionResult<IReadOnlyList<ProductToReturnDto>>> GetProducts()
+        public async Task<ActionResult<IReadOnlyList<ProductToReturnDto>>> GetProducts([FromQuery]ProductSpecParams productParams)
         {
-            var spec = new ProductsWithTypesAndBrandsSpecification();
+            // especificación para los productos
+            var spec = new ProductsWithTypesAndBrandsSpecification(productParams);
+
+            // especificación para la cuenta de los productos devueltos
+            var countSpec = new ProductWithFiltersForCountSpecification(productParams);
+
+            // aplica la especificaión para la cuenta de productos devueltos
+            int totalItems = await _genericProductRepo.CountAsync(countSpec);
 
             IReadOnlyList<Product> productsResult = await _genericProductRepo.ListAsync(spec); 
 
-            return Ok(_mapper.Map<IReadOnlyList<Product>,IReadOnlyList<ProductToReturnDto>>(productsResult));
+            // mapea los productos devueltos a ProductoToReturnDto
+            var data =_mapper.Map<IReadOnlyList<Product>,IReadOnlyList<ProductToReturnDto>>(productsResult);
+
+            // consensa en Pagination la info que necesito devolver como resposponse
+            return Ok(new Pagination<ProductToReturnDto>(productParams.PageIndex, productParams.PageSize, totalItems, data));
+
           /*   return productsResult.Select(product => new ProductToReturnDto()
             {
                 Id = product.Id,

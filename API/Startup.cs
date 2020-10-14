@@ -43,11 +43,21 @@ namespace API
                bdContextOptions.UseSqlite(_configuration.GetConnectionString("DefaultConnection"));
             });
 
+            // Extension method created by us
             services.AddApplicationServices();
            
             services.AddAutoMapper(typeof(MappingProfiles));
 
             services.AddSwaggerDocumentation();
+
+            services.AddCors(opt =>
+            {
+                opt.AddPolicy("CorsPolicy", policy => 
+                {
+                    // solo le va a permitir devolver un header que permita ver la data de los endpoints a esta url
+                    policy.AllowAnyHeader().AllowAnyMethod().WithOrigins("https://localhost:4200");
+                });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -70,8 +80,12 @@ namespace API
 
             app.UseStaticFiles();
 
+            // aplicar cors middleware que especificamos
+            app.UseCors("CorsPolicy");
+
             app.UseAuthorization();
 
+            // Extension method created by us
             app.UseSwaggerDocumentation();
 
             app.UseEndpoints(endpoints =>
