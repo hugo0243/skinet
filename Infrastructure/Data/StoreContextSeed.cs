@@ -17,6 +17,8 @@ namespace Infrastructure.Data
             {
                 if (!storeContext.productBrands.Any())
                 {
+                    //Since this runs from the program class the route to the json is specified
+                    //from there
                     string brandsData = File.ReadAllText(@"../Infrastructure/Data/SeedData/brands.json");
                     
                     List<ProductBrand> brands = JsonSerializer.Deserialize<List<ProductBrand>>(brandsData);
